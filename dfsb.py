@@ -78,8 +78,9 @@ class CSP:
 					return False
 		return True
 
-	# prune using odering variables and values
-	def dfsb_order_var_wrapper(self):
+	# wrapper for the recursive function
+	# which prune using odering variables and values
+	def dfsb_order_var_color_wrapper(self):
 		#possible_value_array
 		pva = []
 		for x in range(self.n):
@@ -90,43 +91,90 @@ class CSP:
 
 		# find variable with MRV(minimum remaining values)
 		asgn_array = [-1] * self.n		
-		self.dfsb_order_var(pva, asgn_array)
+		ret = self.dfsb_order_var_color(pva, 0)
+		if ret == True:
+			print("Find a solution!")
+		else:
+			print("Find no solution!")
 
-	def dfsb_order_var(self, pva, asgn_array)
+	# do the job: prune using odering variables and values
+	def dfsb_order_var_color(self, pva, depth):
 		var = self.find_var(pva)
-		color = self.find_color(pva, var)
-		new_pva = self.construct_new_pva(pva, var, color)
-		asgn_array[var] = color
-		pass
+		color_list = self.get_ordered_color_list(pva, var)
 
+		if var == -1:
+			return False
 
+		flag = False
+		for t in color_list:
+			new_pva, recover = self.construct_new_pva(pva, var, t[1])
+			if (new_pva == None):
+				# skip bad color
+				self.recover_pva(pva, recover)
+				continue
+
+			self._asgn_array_[var] = t[1]
+			if depth + 1 == self.n:
+				self.print_res(self._asgn_array_)
+				return True
+
+			ret = self.dfsb_order_var_color(new_pva, depth + 1)
+			if ret == True:
+				flag = True
+				break
+			# restore asgn_array and pva for next round
+			self._asgn_array_[var] = -1
+			self.recover_pva(new_pva, recover)
+
+		return flag
+
+	# recover pva with recover_array which records which color has been removed from which variable
+	def recover_pva(self, pva, recover_array):
+		for t in recover_array:
+			pva[t[0]].append(t[1])
 		
-	def find_color(pva, var):
+	# update pva according to the variable and color we have chosen
+	def construct_new_pva(self, pva, var, color):
+		pva_recover_array = []
+		for neighbor in self._adj_array_[var]:
+			if color in pva[neighbor]:
+				pva[neighbor].remove(color)
+				pva_recover_array.append((neighbor, color))
+			if len(pva[neighbor]) == 0:
+				# reach dead end, we should back track
+				return None, pva_recover_array
+		return pva, pva_recover_array
+
+	# order color according to how much it affect other variables 
+	# return color list in ascending order like [1,2,3]
+	def get_ordered_color_list(self, pva, var):
 		# least pruned number
-		lpn = self.k + 1
-		c = -1
+		clist = []
 		for color in pva[var]:
 			pn = 0
 			for neighbor in self._adj_array_[var]:
 				if color in pva[neighbor]:
 					pn += 1
-			if pn < lpn:
-				lpn = pn
-				c = color
-		return c
-		
+			# tuple (affects, color)
+			clist.append((pn,color))
+		return sorted(clist, key = lambda x: x[0])
+
 	# find variable with MRV(minimum remaining values)
 	def find_var(self, pva):
 		idx = -1
 		min_count = self.k + 1
 		for i in range(self.n):
+			if self._asgn_array_[i] != -1:
+				# skip already assigned variable
+				continue
+			# Warning: we shouldn't reach here, len(pva[i] == 0) means this is dead end, backtrack needed
 			if len(pva[i]) == 0:
+				print("Warning! no remaining value for this var means dead end, we should backtrack!")
 				continue
 			if len(pva[i]) < min_count:
 				min_count = len(pva[i])
 				idx = i
 		return idx
-
 
 	# prune using arc consistency
 	def dfsb_ac(self):
@@ -157,4 +205,5 @@ if __name__ == '__main__':
 		exit(1)
 
 	csp = CSP(fd_in, fd_out)
-	csp.dfsb(0)
+	#csp.dfsb(0)
+	csp.dfsb_order_var_color_wrapper()
