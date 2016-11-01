@@ -102,15 +102,15 @@ class CSP:
 		var = self.find_var(pva)
 		color_list = self.get_ordered_color_list(pva, var)
 
+		# no valid variable found
 		if var == -1:
 			return False
 
 		flag = False
 		for t in color_list:
-			new_pva, recover = self.construct_new_pva(pva, var, t[1])
+			new_pva = self.construct_new_pva(pva, var, t[1])
 			if (new_pva == None):
 				# skip bad color
-				self.recover_pva(pva, recover)
 				continue
 
 			self._asgn_array_[var] = t[1]
@@ -118,32 +118,40 @@ class CSP:
 				self.print_res(self._asgn_array_)
 				return True
 
+			# use arc-pruning to reduce search domains
+			self.ac_pruning(new_pva)
 			ret = self.dfsb_order_var_color(new_pva, depth + 1)
 			if ret == True:
 				flag = True
 				break
+
 			# restore asgn_array and pva for next round
 			self._asgn_array_[var] = -1
-			self.recover_pva(new_pva, recover)
 
 		return flag
 
-	# recover pva with recover_array which records which color has been removed from which variable
-	def recover_pva(self, pva, recover_array):
-		for t in recover_array:
-			pva[t[0]].append(t[1])
-		
 	# update pva according to the variable and color we have chosen
 	def construct_new_pva(self, pva, var, color):
-		pva_recover_array = []
+		# copy pva to new pva
+		new_pva = []
+		for i in range(len(pva)):
+			# for the assigned var, it has only one possible value, that is color
+			if i == var:
+				new_pva.append([color])
+				continue
+
+			a = []
+			for e in pva[i]:
+				a.append(e)
+			new_pva.append(a)
+
 		for neighbor in self._adj_array_[var]:
-			if color in pva[neighbor]:
-				pva[neighbor].remove(color)
-				pva_recover_array.append((neighbor, color))
-			if len(pva[neighbor]) == 0:
+			if color in new_pva[neighbor]:
+				new_pva[neighbor].remove(color)
+			if len(new_pva[neighbor]) == 0:
 				# reach dead end, we should back track
-				return None, pva_recover_array
-		return pva, pva_recover_array
+				return None
+		return new_pva
 
 	# order color according to how much it affect other variables 
 	# return color list in ascending order like [1,2,3]
@@ -167,18 +175,43 @@ class CSP:
 			if self._asgn_array_[i] != -1:
 				# skip already assigned variable
 				continue
-			# Warning: we shouldn't reach here, len(pva[i] == 0) means this is dead end, backtrack needed
 			if len(pva[i]) == 0:
-				print("Warning! no remaining value for this var means dead end, we should backtrack!")
-				continue
+				# print("Warning! no remaining value means dead end, we should backtrack!")
+				return -1
 			if len(pva[i]) < min_count:
 				min_count = len(pva[i])
 				idx = i
 		return idx
 
 	# prune using arc consistency
-	def dfsb_ac(self):
-		pass
+	def ac_pruning(self, pva):
+		# generate queue of arcs
+		queue = []
+		for i in range(self.n):
+			for j in self._adj_array_[i]:
+				queue.append((i,j))
+		while len(queue) != 0:
+			(xi, xj) = queue.pop(0)
+			if self.remove_inconsistency_values(xi, xj, pva):
+				for xk in self._adj_array_[xi]:
+					queue.append((xk, xi))
+
+	# return true if succeeds
+	def remove_inconsistency_values(self, xi, xj, pva):
+		removed = False
+		for x in pva[xi]:
+			if not self.arc_test(x, pva[xj]):
+				pva[xi].remove(x)
+				removed = True
+		return removed
+
+	# test any value in arr is consistent with x
+	def arc_test(self, x, arr):
+		for y in arr:
+			if y != x:
+				return True
+		return False
+
 	def print_res(self, arr):
 		print("Success, a possible assignment:")
 		for x in arr:
