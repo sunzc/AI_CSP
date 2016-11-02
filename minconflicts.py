@@ -27,6 +27,10 @@ class LocalSearch:
 			print("input file format does not match!")
 			exit(1)
 
+		self.n = N
+		self.m = M
+		self.k = K
+
 		self._adj_array_ = [[] for i in range(N)]
 		self._asgn_array_ = [-1] * N
 		i = 0
@@ -44,7 +48,36 @@ class LocalSearch:
 		self._asgn_array_
 
 	def search(self):
+		self.greedy_initial_assignment()
+		# TODO
 		pass
+
+	def greedy_initial_assignment(self):
+		for var in range(self.n):
+			color = self.find_assignment_with_min_conflicts(var)
+			self._asgn_array_[var] = color
+
+	def find_conflicts_var_list(self):
+		conflicts_vars = []
+		for var in range(self.n):
+			for neighbour in self._adj_array_[var]:
+				if self._asgn_array_[var] == self._asgn_array_[neighbour]:
+					conflists_vars.append(var)
+					break
+		return conflicts_vars
+
+	def find_assignment_with_min_conflicts(self, var):
+		color = -1
+		min_conflicts = self.n
+		for clr in range(self.k):
+			total_conflicts = 0
+			for neighbour in self._adj_array_[var]:
+				if clr == self._asgn_array_[neighbour]:
+					total_conflicts += 1
+			if total_conflicts < min_conflicts:
+				color = clr
+				min_conflicts = total_conflicts
+		return color
 
 	def print_res(self):
 		pass
