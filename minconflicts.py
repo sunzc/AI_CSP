@@ -7,6 +7,7 @@
 # E-mail: zhisun@cs.stonybrook.edu
 
 import sys
+import random
 
 def usage():
 	print('python minconflicts.py <input_file> <output_file>') 
@@ -47,10 +48,39 @@ class LocalSearch:
 		self._adj_array_
 		self._asgn_array_
 
-	def search(self):
+	def search(self, max_count):
 		self.greedy_initial_assignment()
+		print("greedy initial assignment:")
+		self.print_res(self._asgn_array_)
+
 		# TODO
-		pass
+		flag = False
+		for i in range(max_count):
+			var_list = self.find_conflicts_var_list()
+			print("conflict var list")
+			print(var_list)
+
+			if (len(var_list) == 0):
+				self.print_res(self._asgn_array_)
+				flag = True
+				break
+				
+			idx = random.randrange(0, len(var_list))
+			var = var_list[idx]
+
+			print("random var chosen, idx:%d var:%d"%(idx, var))
+
+			color = self.find_assignment_with_min_conflicts(var)
+			self._asgn_array_[var] = color
+			is_final = self.check_result()
+			if is_final == True:
+				flag = True
+				self.print_res(self._asgn_array_)
+				break
+
+		if flag == False:
+			print("No Result")
+			self.print_res(self._asgn_array_)
 
 	def greedy_initial_assignment(self):
 		for var in range(self.n):
@@ -62,7 +92,7 @@ class LocalSearch:
 		for var in range(self.n):
 			for neighbour in self._adj_array_[var]:
 				if self._asgn_array_[var] == self._asgn_array_[neighbour]:
-					conflists_vars.append(var)
+					conflicts_vars.append(var)
 					break
 		return conflicts_vars
 
@@ -77,10 +107,21 @@ class LocalSearch:
 			if total_conflicts < min_conflicts:
 				color = clr
 				min_conflicts = total_conflicts
+		print("min_conflicts : %d color:%d" % (min_conflicts, color))
 		return color
 
-	def print_res(self):
-		pass
+	def check_result(self):
+		for var in range(self.n):
+			for neighbour in self._adj_array_[var]:
+				if self._asgn_array_[var] == self._asgn_array_[neighbour]:
+					return False
+		return True
+
+	def print_res(self, arr):
+		print("current assignment:")
+		for x in arr:
+			print(x, end=" ")
+		print("")
 
 
 if __name__ == '__main__':
@@ -100,5 +141,4 @@ if __name__ == '__main__':
 		exit(1)
 
 	ls = LocalSearch(fd_in, fd_out)
-	ls.search()
-	ls.print_res()
+	ls.search(50)
