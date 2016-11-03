@@ -32,6 +32,8 @@ class CSP:
 		self.m = M
 		self.k = K
 		self.output_file = output_file
+		self.search_count = 0
+		self.ac_pruning_count = 0
 
 		self._adj_array_ = [[] for i in range(N)]
 		self._asgn_array_ = [-1] * N
@@ -50,6 +52,7 @@ class CSP:
 
 	# basic version, no optimization
 	def dfsb(self, idx):
+		self.search_count += 1
 		if idx == self.n:
 			self.print_res(self._asgn_array_)
 			return True
@@ -91,12 +94,13 @@ class CSP:
 		ret = self.dfsb_order_var_color(pva, 0)
 		if ret == True:
 			self.write_res(self._asgn_array_)
-			print("Find a solution!")
+			print("Find a solution! search_count:%d, ac_pruning_count:%d"%(self.search_count, self.ac_pruning_count))
 		else:
 			print("Find no solution!")
 
 	# do the job: prune using odering variables and values
 	def dfsb_order_var_color(self, pva, depth):
+		self.search_count += 1
 		var = self.find_var(pva)
 		color_list = self.get_ordered_color_list(pva, var)
 		#print("var:%d"%var)
@@ -207,6 +211,7 @@ class CSP:
 
 	# return true if succeeds
 	def remove_inconsistency_values(self, xi, xj, pva):
+		self.ac_pruning_count += 1
 		removed = False
 		for x in pva[xi]:
 			if not self.arc_test(x, pva[xj]):
@@ -255,7 +260,7 @@ if __name__ == '__main__':
 	if mode == 0:
 		ret = csp.dfsb(0)
 		if ret == True:
-			print("Find a solution")
+			print("Find a solution: search_Count : %d"%csp.search_count)
 			csp.write_res(csp._asgn_array_)
 	elif mode == 1:
 		csp.dfsb_order_var_color_wrapper()
