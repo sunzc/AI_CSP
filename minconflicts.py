@@ -6,6 +6,9 @@
 # SBUID: 110345185
 # E-mail: zhisun@cs.stonybrook.edu
 
+# Reference Report
+# https://en.wikipedia.org/wiki/Min-conflicts_algorithm
+
 import sys
 import random
 

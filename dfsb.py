@@ -6,6 +6,12 @@
 # SBUID: 110345185
 # E-mail: zhisun@cs.stonybrook.edu
 
+# Reference Report:
+# https://www.ics.uci.edu/~welling/teaching/271fall09/CSP271fall09.pdf
+# Student Chintak Sheth give me some advice on optimizing the dfsb in choosing variable, especially when two
+# variables has the same MRV value, we should choose the one with most edges. I use this approach to
+# handle the hard case.
+
 import sys
 
 def usage():
