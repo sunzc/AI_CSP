@@ -101,11 +101,14 @@ class LocalSearch:
 				flag = True
 				self.print_res(self._asgn_array_)
 				self.write_res(self._asgn_array_)
+				print("search count:%d" % i)
 				break
 
 		if flag == False:
 			print("No Result")
 			self.print_res(self._asgn_array_)
+			self.output_file.write("No answer")
+			self.output_file.close()
 
 	def greedy_initial_assignment(self):
 		for var in range(self.n):
@@ -176,4 +179,4 @@ if __name__ == '__main__':
 		exit(1)
 
 	ls = LocalSearch(fd_in, fd_out)
-	ls.search(1000000)
+	ls.search(10000000)
