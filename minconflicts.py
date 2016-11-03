@@ -31,6 +31,7 @@ class LocalSearch:
 		self.n = N
 		self.m = M
 		self.k = K
+		self.output_file = output_file
 
 		self._adj_array_ = [[] for i in range(N)]
 		self._asgn_array_ = [-1] * N
@@ -99,6 +100,7 @@ class LocalSearch:
 			if is_final == True:
 				flag = True
 				self.print_res(self._asgn_array_)
+				self.write_res(self._asgn_array_)
 				break
 
 		if flag == False:
@@ -149,6 +151,12 @@ class LocalSearch:
 		for x in arr:
 			print(x, end=" ")
 		print("")
+
+	def write_res(self, arr):
+		for x in arr[:-1]:
+			self.output_file.write(str(x)+"\n")
+		self.output_file.write(str(arr[-1]))
+		self.output_file.close()
 
 
 if __name__ == '__main__':
