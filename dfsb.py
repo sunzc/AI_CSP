@@ -31,6 +31,7 @@ class CSP:
 		self.n = N
 		self.m = M
 		self.k = K
+		self.output_file = output_file
 
 		self._adj_array_ = [[] for i in range(N)]
 		self._asgn_array_ = [-1] * N
@@ -44,8 +45,8 @@ class CSP:
 
 		# make sure there are M constraints as claimed in head line
 		assert(i == M)
-		print(self._adj_array_)
-		print(self._asgn_array_)
+		#print(self._adj_array_)
+		#print(self._asgn_array_)
 
 	# basic version, no optimization
 	def dfsb(self, idx):
@@ -56,17 +57,14 @@ class CSP:
 		tag = False
 		for color in range(self.k):
 			if self.check(idx, color):
-				tag = True
 				self._asgn_array_[idx] = color
-				if self.dfsb(idx+1):
+				tag = self.dfsb(idx+1)
+				if tag == True:
 					break
 			else:
 				continue
 
-		if tag == False:
-			return False
-		else:
-			return True
+		return tag
 
 	# compare color at @idx with every assigned variable to check conflicts
 	def check(self, idx, color):
@@ -92,6 +90,7 @@ class CSP:
 		asgn_array = [-1] * self.n		
 		ret = self.dfsb_order_var_color(pva, 0)
 		if ret == True:
+			self.write_res(self._asgn_array_)
 			print("Find a solution!")
 		else:
 			print("Find no solution!")
@@ -100,8 +99,8 @@ class CSP:
 	def dfsb_order_var_color(self, pva, depth):
 		var = self.find_var(pva)
 		color_list = self.get_ordered_color_list(pva, var)
-		print("var:%d"%var)
-		print(color_list)
+		#print("var:%d"%var)
+		#print(color_list)
 
 		# no valid variable found
 		if var == -1:
@@ -190,7 +189,7 @@ class CSP:
 				idx = i
 				max_neigh = len(self._adj_array_[i])
 
-		print("min_count:%d idx:%d, max_neigh:%d" % (min_count, idx, max_neigh))
+		#print("min_count:%d idx:%d, max_neigh:%d" % (min_count, idx, max_neigh))
 		return idx
 
 	# prune using arc consistency
@@ -227,6 +226,11 @@ class CSP:
 		for x in arr:
 			print(x, end=" ")
 		print("")
+	def write_res(self, arr):
+		for x in arr[:-1]:
+			self.output_file.write(str(x)+"\n")
+		self.output_file.write(str(arr[-1]))
+		self.output_file.close()
 
 if __name__ == '__main__':
 
@@ -248,5 +252,10 @@ if __name__ == '__main__':
 		exit(1)
 
 	csp = CSP(fd_in, fd_out)
-	#csp.dfsb(0)
-	csp.dfsb_order_var_color_wrapper()
+	if mode == 0:
+		ret = csp.dfsb(0)
+		if ret == True:
+			print("Find a solution")
+			csp.write_res(csp._asgn_array_)
+	elif mode == 1:
+		csp.dfsb_order_var_color_wrapper()
