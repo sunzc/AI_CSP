@@ -48,17 +48,40 @@ class LocalSearch:
 		self._adj_array_
 		self._asgn_array_
 
+	def compare_var_list(self, lista, listb):
+		if (len(lista) != len(listb)):
+			return False
+		for e in lista:
+			if e not in listb:
+				return False
+		return True
+
 	def search(self, max_count):
 		self.greedy_initial_assignment()
+		#self.random_assignment()
 		print("greedy initial assignment:")
+		#print("random initial assignment:")
 		self.print_res(self._asgn_array_)
 
 		# TODO
 		flag = False
+		old_var_list = []
+		count = 0
 		for i in range(max_count):
 			var_list = self.find_conflicts_var_list()
-			print("conflict var list")
-			print(var_list)
+
+			#print("conflict var list")
+			#print(var_list)
+
+			if self.compare_var_list(old_var_list, var_list) == True:
+				count += 1
+			else:
+				old_var_list = var_list
+
+			if count == 50:
+				print("local dilema, restart!")
+				count = 0
+				self.random_assignment(var_list)
 
 			if (len(var_list) == 0):
 				self.print_res(self._asgn_array_)
@@ -68,7 +91,7 @@ class LocalSearch:
 			idx = random.randrange(0, len(var_list))
 			var = var_list[idx]
 
-			print("random var chosen, idx:%d var:%d"%(idx, var))
+			#print("random var chosen, idx:%d var:%d"%(idx, var))
 
 			color = self.find_assignment_with_min_conflicts(var)
 			self._asgn_array_[var] = color
@@ -87,6 +110,10 @@ class LocalSearch:
 			color = self.find_assignment_with_min_conflicts(var)
 			self._asgn_array_[var] = color
 
+	def random_assignment(self, var_list):
+		for var in var_list:
+			self._asgn_array_[var] = random.randrange(0, self.k)
+		
 	def find_conflicts_var_list(self):
 		conflicts_vars = []
 		for var in range(self.n):
@@ -107,7 +134,7 @@ class LocalSearch:
 			if total_conflicts < min_conflicts:
 				color = clr
 				min_conflicts = total_conflicts
-		print("min_conflicts : %d color:%d" % (min_conflicts, color))
+		#print("min_conflicts : %d color:%d" % (min_conflicts, color))
 		return color
 
 	def check_result(self):
@@ -141,4 +168,4 @@ if __name__ == '__main__':
 		exit(1)
 
 	ls = LocalSearch(fd_in, fd_out)
-	ls.search(50)
+	ls.search(1000000)
