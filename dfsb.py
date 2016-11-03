@@ -89,7 +89,6 @@ class CSP:
 				a.append(c)
 			pva.append(a)
 
-		# find variable with MRV(minimum remaining values)
 		asgn_array = [-1] * self.n		
 		ret = self.dfsb_order_var_color(pva, 0)
 		if ret == True:
@@ -101,6 +100,8 @@ class CSP:
 	def dfsb_order_var_color(self, pva, depth):
 		var = self.find_var(pva)
 		color_list = self.get_ordered_color_list(pva, var)
+		print("var:%d"%var)
+		print(color_list)
 
 		# no valid variable found
 		if var == -1:
@@ -161,7 +162,8 @@ class CSP:
 		for color in pva[var]:
 			pn = 0
 			for neighbor in self._adj_array_[var]:
-				if color in pva[neighbor]:
+				# only check the remaining variables
+				if color in pva[neighbor] and self._asgn_array_[neighbor] == -1:
 					pn += 1
 			# tuple (affects, color)
 			clist.append((pn,color))
@@ -171,6 +173,7 @@ class CSP:
 	def find_var(self, pva):
 		idx = -1
 		min_count = self.k + 1
+		max_neigh = 0
 		for i in range(self.n):
 			if self._asgn_array_[i] != -1:
 				# skip already assigned variable
@@ -180,7 +183,14 @@ class CSP:
 				return -1
 			if len(pva[i]) < min_count:
 				min_count = len(pva[i])
+				max_neigh = len(self._adj_array_[i])
 				idx = i
+			elif len(pva[i]) == min_count and len(self._adj_array_[i]) > len(self._adj_array_[idx]):
+				# choose most constraint variable, that means it has most edges
+				idx = i
+				max_neigh = len(self._adj_array_[i])
+
+		print("min_count:%d idx:%d, max_neigh:%d" % (min_count, idx, max_neigh))
 		return idx
 
 	# prune using arc consistency
